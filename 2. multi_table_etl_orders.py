@@ -1,6 +1,6 @@
 # IMPORTANT DISCLAIMER!!!
 # Before running this pipeline, you must run the '2.0 setup_database.py' (ONLY ONCE)
-# 'ecommerce.db' will be generated
+# '2.0 ecommerce.db' file will be generated
 # this is the SQLite database where this pipeline will extract data from!
 
 
