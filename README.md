@@ -6,7 +6,7 @@ data quality, and modular pipeline design.
 
 ---
 
-## Project 1 — Users ETL Pipeline (level of complexity: EASY)
+## Project 1 — Users ETL Pipeline
 
 ### Overview
 A simple ETL pipeline that extracts user data from a public REST API,
@@ -27,6 +27,40 @@ REST API Clean Data CSV File
   - Guards against `None` values at each stage
 - **Load**: Saves cleaned data as a date-stamped CSV file in `Outputs/`
 
----
+-----------------------------------------------------------------------------
 
-## Project 2 — 
+## Project 2 — Multi Table Orders ETL Pipeline
+
+## Overview
+A multi-source ETL pipeline that extracts relational data from a local SQLite database, 
+joins and transforms two tables, and loads the result into a structured CSV file.
+
+## Pipeline Architecture
+Extract        →        Transform        →        Load
+  ↓                         ↓                       ↓
+SQLite DB             Merged DataFrame           CSV File
+(2 tables)
+
+## What It Does
+**Extract**:
+- Reads users and orders tables from a local SQLite database (ecommerce.db) using pandas.read_sql()
+
+**Transform**:
+- Joins two sql tables: df_orders and df_users 
+- Filters out cancelled orders 
+- Creates full_name column by concatenating first_name and last_name, then drops the originals 
+- Converts orders' amount from USD to Euro 
+- Flags high-value orders (is_high_value = True if order_value_eur > 100)
+
+**Load**:
+- Saves transformed data as a date-stamped CSV file in Outputs/
+
+-----------------------------------------------------------------------------
+
+## Project 3 - 
+
+
+
+
+
+
