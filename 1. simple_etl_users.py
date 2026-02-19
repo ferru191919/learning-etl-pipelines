@@ -84,9 +84,6 @@ if __name__ == "__main__":         # Guard (for production)
     df = transform_users(raw_data)
     output_file = load_users(df)
 
-# Without this guard, this whole pipeline is triggered when someone imports this .py file.
-# They might just want to reuse your transform_users() function —
-# but your entire pipeline fired automatically. That's a bug.
 
 
 
