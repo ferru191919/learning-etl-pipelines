@@ -1,0 +1,60 @@
+# This will generate a SQLite database
+# You must run this file (only once) to create the database for Exercise '2. multi_table_etl_orders.py'
+# This SQLite DB will be the data source for the 'extract' function in Exercise 2
+
+import sqlite3
+
+DB_PATH = "2.0 ecommerce.db"
+
+def setup_database():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.executescript("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id     INTEGER PRIMARY KEY,
+            first_name  TEXT,
+            last_name   TEXT,
+            email       TEXT,
+            country     TEXT,
+            created_at  TEXT
+        );
+
+        INSERT OR IGNORE INTO users VALUES
+            (1, 'Alice',   'Smith',   'alice@email.com',   'IT', '2023-01-10'),
+            (2, 'Bob',     'Jones',   'bob@email.com',     'US', '2023-02-15'),
+            (3, 'Clara',   'Brown',   'clara@email.com',   'DE', '2023-03-20'),
+            (4, 'David',   'Wilson',  'david@email.com',   'FR', '2023-04-25'),
+            (5, 'Eva',     'Taylor',  'eva@email.com',     'IT', '2023-05-30'),
+            (6, 'Frank',   'Martin',  'frank@email.com',   'US', '2023-06-05'),
+            (7, 'Georgia', 'Lee',     'georgia@email.com', 'UK', '2023-07-11');
+
+        CREATE TABLE IF NOT EXISTS orders (
+            order_id    INTEGER PRIMARY KEY,
+            user_id     INTEGER,
+            product     TEXT,
+            amount_usd  REAL,
+            status      TEXT,
+            order_date  TEXT
+        );
+
+        INSERT OR IGNORE INTO orders VALUES
+            (1,  1, 'Laptop',     999.99, 'completed', '2024-01-15'),
+            (2,  2, 'Mouse',       25.00, 'completed', '2024-01-16'),
+            (3,  1, 'Keyboard',    75.00, 'cancelled', '2024-01-17'),
+            (4,  3, 'Monitor',    299.99, 'completed', '2024-01-18'),
+            (5,  2, 'Webcam',      89.99, 'pending',   '2024-01-19'),
+            (6,  4, 'Headphones', 149.99, 'completed', '2024-01-20'),
+            (7,  5, 'Desk Chair', 399.99, 'cancelled', '2024-01-21'),
+            (8,  3, 'USB Hub',     35.00, 'completed', '2024-01-22'),
+            (9,  6, 'Laptop',     999.99, 'completed', '2024-01-23'),
+            (10, 7, 'Mouse',       25.00, 'pending',   '2024-01-24');
+    """)
+
+    conn.commit()
+    conn.close()
+    print("Database setup complete!")
+
+if __name__ == "__main__":
+    setup_database()
+

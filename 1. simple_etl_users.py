@@ -71,7 +71,7 @@ def load_users(df):
         logger.warning("No clean data received, skipping loading")
         return None
 
-    os.makedirs(OUTPUT_DIR, exist_ok=True)   # Creates new "Outputs" folder
+    os.makedirs(OUTPUT_DIR, exist_ok=True)   # Creates new folder for output (if it does not exist)
     date = datetime.today().strftime('%Y-%m-%d')
     output_file = f'{OUTPUT_DIR}simple_etl_users_output_{date}.csv'  # Output file name
     df.to_csv(output_file, index=False)  # Transforms df into csv file
@@ -79,12 +79,14 @@ def load_users(df):
     return output_file
 
 
-if __name__ == "__main__":         # Guard (for production)
-    raw_data = extract_users()     # ← only runs when YOU run this file
+def main():                         # Logic
+    raw_data = extract_users()
     df = transform_users(raw_data)
     output_file = load_users(df)
 
-
+if __name__ == "__main__":         # Guard block ← only runs when YOU run this file
+                                    # (e.g. avoids automatic run when imported)
+    main()
 
 
 
