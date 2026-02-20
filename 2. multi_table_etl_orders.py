@@ -20,7 +20,9 @@ USD_TO_EUR = 0.92
 # Data source: 'users' & 'orders' tables in ecommerce.db file
 # To create the ecommerce.db file, run the setup_database.py first
 
-def extract(conn):      #
+def extract(conn):      # conn = connection object between Python and the SQLite .db file
+                        # created with sqlite3.connect(DB_PATH) in main()
+
     df_users = pd.read_sql("SELECT * FROM users", conn)     # pd function to read sql tables
                                                                  # it returns a DataFrame
     df_orders = pd.read_sql("SELECT * FROM orders", conn)
@@ -61,7 +63,7 @@ def load(df_merged):
 
 
 def main():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH)  # defined conn object
     df_users, df_orders = extract(conn)
     df_merged = transform(df_users, df_orders)
     output_file = load(df_merged)
