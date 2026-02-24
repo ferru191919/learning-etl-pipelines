@@ -57,16 +57,20 @@ def transform(df_users, df_orders):
 def load(df_merged):
     date = datetime.today().strftime('%Y-%m-%d')
     output_file = f"Outputs/orders_clean_{date}.csv"
-    df_merged.to_csv(output_file, index=False)  # avoids index extra column
+    df_merged.to_csv(output_file, index=False)  # transforms df into csv , avoids index extra column
     logger.info(f"{output_file} loaded successfully!")
     return output_file
 
 
 def main():
-    conn = sqlite3.connect(DB_PATH)  # defined conn object
-    df_users, df_orders = extract(conn)
-    df_merged = transform(df_users, df_orders)
-    output_file = load(df_merged)
+    with sqlite3.connect(DB_PATH) as conn:  # defined conn object (connection between this file and SQL database)
+                                            # Context Manager (auto conn.close())
+        df_users, df_orders = extract(conn)
+        df_merged = transform(df_users, df_orders)
+        output_file = load(df_merged)
+
+    logger.info(f"🌟 ETL COMPLETE! Output: {output_file}")
+
 
 if __name__ == "__main__":
     main()
