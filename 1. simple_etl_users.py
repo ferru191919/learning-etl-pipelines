@@ -82,7 +82,7 @@ def load_users(df):
 def main():                         # Logic
     raw_data = extract_users()
     df = transform_users(raw_data)
-    output_file = load_users(df)
+    load_users(df)
 
 if __name__ == "__main__":         # Guard block ← only runs when YOU run this file
                                     # (e.g. avoids automatic run when imported)
