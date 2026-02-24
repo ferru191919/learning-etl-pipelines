@@ -91,8 +91,8 @@ def transformation_weather(df_cities, cities_weather):
 ## ----------------- ##
 
 def load_weather_report(conn, df_merged):
-    df_final = df_merged.to_sql("weather_report", conn, if_exists="replace", index=False)  # transforms df to "weather_report" SQL table
-                                                                                           # conn = connecting to existing SQLite file
+    df_merged.to_sql("weather_report", conn, if_exists="replace", index=False)  # transforms df to "weather_report" SQL table
+                                                                                # conn = connecting to existing SQLite file
     logger.info("✅ Loaded weather_report table to SQLite")
 
 
