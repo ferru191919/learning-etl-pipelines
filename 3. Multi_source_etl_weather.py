@@ -3,7 +3,6 @@
 # First, run the '3.0 setup_database.py' file to create the SQLite database to extract data from
 
 
-from datetime import datetime
 import pandas as pd
 import requests
 import sqlite3
