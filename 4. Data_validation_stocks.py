@@ -1,7 +1,7 @@
 # Validation Rules = e.g. ensuring data is not missing, ensuring ID uniqueness,
 #                         ensuring referential integrity, minimum row count, etc...
 
-# It's important to do so after each step of the ETL pipeline --> Pipeline Observability
+# It's important to do so after each step of the ETL pipeline --> Pipeline Observability.
 
 from datetime import datetime
 import pandas as pd
