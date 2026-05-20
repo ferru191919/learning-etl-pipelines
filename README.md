@@ -54,8 +54,26 @@ Extract (SQLite DB) → Transform → Load (CSV file)
 
 ## Project 3 - 
 
+### Overview
+A multi-source ETL pipeline that extracts city data from a local SQLite database and live weather data from a public API, transforms and merges both sources, and loads the result into a structured SQLite reporting table.
 
+### Pipeline Architecture
+Extract (SQLite DB + API) → Transform → Load (SQLite Report Table)
 
+## What It Does
+**Extract**
+- Reads city data from a local SQLite database (`3.0 cities.db`) using `pandas.read_sql_query()`
+- Calls the [Open-Meteo API](https://open-meteo.com/) for each city using latitude and longitude
+- Collects current weather data for multiple cities through dynamic API requests
+
+**Transform**
+- Parses raw JSON responses into a flat weather DataFrame
+- Adds `city_name` to each weather record
+- Merges weather data with city metadata on `city_name`
+- Flags extreme weather conditions (`is_extreme = True` if temperature > 35 or temperature < 0)
+
+**Load**
+- Saves the final transformed dataset into the `weather_report` table in SQLite
 
 
 
