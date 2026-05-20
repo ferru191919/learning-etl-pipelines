@@ -34,7 +34,7 @@ A multi-source ETL pipeline that extracts relational data from a local SQLite da
 joins and transforms two tables, and loads the result into a structured CSV file.
 
 ## Pipeline Architecture
-Extract (SQLite DB) → Transform → Load (CSV file)
+Extract (SQLite DB two tables) → Transform → Load (CSV file)
 
 ## What It Does
 **Extract**:
@@ -76,4 +76,45 @@ Extract (SQLite DB + API) → Transform → Load (SQLite Report Table)
 - Saves the final transformed dataset into the `weather_report` table in SQLite
 
 
+-----------------------------------------------------------------------------
 
+## Project 4 — Stock Market ETL Pipeline with Validation Rules
+
+### Overview
+A multi-step ETL pipeline that extracts stock market data from a public financial API,
+validates data quality before and after transformation, and loads the result into a 
+structured SQLite reporting table.
+
+### Pipeline Architecture
+Extract → Validate Raw → Transform → Validate Clean → Load
+
+## What It Does
+
+**Extract**
+- Calls the Alpha Vantage API for multiple stock tickers (AAPL, GOOGL, MSFT, AMZN, TSLA)
+- Collects raw market data through repeated API requests with a short delay between calls
+
+**Validate Raw**
+- Ensures each response contains the Global Quote key
+- Skips empty API responses
+- Checks that price values exist and can be converted to numeric format
+
+**Transform**
+- Flattens nested JSON into a clean pandas DataFrame
+- Renames fields into analysis-friendly snake_case columns
+- Converts price and volume fields to numeric types
+- Adds an extracted_at timestamp column
+- Flags high-volume stocks (is_high_volume = True if volume > 20,000,000)
+
+**Validate Clean**
+- Ensures the transformed DataFrame is not empty
+- Checks for null values in critical columns such as ticker and current_price
+- Verifies that stock prices are positive
+- Confirms the final row count matches the expected number of tickers
+
+**Load**
+- Saves the final validated dataset into the stock_report table in SQLite
+
+-----------------------------------------------------------------------------
+
+## Project 5 —
