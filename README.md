@@ -52,7 +52,7 @@ Extract (SQLite DB) → Transform → Load (CSV file)
 
 -----------------------------------------------------------------------------
 
-## Project 3 - 
+## Project 3 - Multi-Source Weather ETL Pipeline
 
 ### Overview
 A multi-source ETL pipeline that extracts city data from a local SQLite database and live weather data from a public API, transforms and merges both sources, and loads the result into a structured SQLite reporting table.
