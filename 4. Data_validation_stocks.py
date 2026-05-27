@@ -156,6 +156,8 @@ def main():
         logger.info(f"Transformed df_clean shape: {df_clean.shape}")
 
         df_clean = validate_clean(df_clean)
+        logger.info(f"Valid cleaned df_clean shape: {df_clean.shape}")
+
         load(df_clean, conn)
 
 
