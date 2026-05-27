@@ -151,4 +151,4 @@ Extract → Validate Raw → Transform → Branch → Load
 - Rows with missing customer_name after the join are routed to a rejected dataset.
 
 **Load**
-Loads accepted rows into the order_report SQLite table and rejected rows into the order_report_rejected table. This branching pattern preserves useful data for reporting while keeping failed records available for debugging, auditing, and possible reprocessing.
+- Loads accepted rows into the order_report SQLite table and rejected rows into the order_report_rejected table. This branching pattern preserves useful data for reporting while keeping failed records available for debugging, auditing, and possible reprocessing.
