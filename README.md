@@ -117,4 +117,38 @@ Extract → Validate Raw → Transform → Validate Clean → Load
 
 -----------------------------------------------------------------------------
 
-## Project 5 —
+## Project 5 — Multi-Source Orders ETL Pipeline with Branching Logic
+
+### Overview
+A multi-source ETL pipeline that extracts customer master data from SQLite and order/cart
+data from a public API, validates both sources with different rules, transforms and enriches 
+the data through a join, and branches the output into accepted and rejected reporting tables.
+
+### Pipeline Architecture
+Extract → Validate Raw → Transform → Branch → Load
+
+### What It Does
+
+**Extract**
+- Reads customer data from a SQLite customers table (master data)
+- Fetches raw cart/order data from the DummyJSON carts API (transaction data).
+
+**Validate Raw**
+- DataFrame is not empty
+- customer_id has no null
+- customer_id is unique
+- required descriptive fields such as customer_name and email are present
+
+**Transform**
+1. Receive validated inputs
+2. Transform order dictionary input into DataFrame
+3. Join the two DataFrames (order row fine-grained)
+4. Branching based on condition (orders with and without customer)
+5. Apply final cleaning transformation to tables before loading
+
+**Branch**
+- Rows with a matched customer go to the accepted dataset.
+- Rows with missing customer_name after the join are routed to a rejected dataset.
+
+**Load**
+Loads accepted rows into the order_report SQLite table and rejected rows into the order_report_rejected table. This branching pattern preserves useful data for reporting while keeping failed records available for debugging, auditing, and possible reprocessing.
