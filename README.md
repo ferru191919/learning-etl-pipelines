@@ -6,7 +6,7 @@ data quality, and modular pipeline design.
 
 ---
 
-## Project 1 — Users ETL Pipeline
+## Project 1 — REST API - Users ETL
 
 ### Overview
 A simple ETL pipeline that extracts user data from a public REST API,
@@ -27,7 +27,7 @@ Extract (RestAPI) → Transform → Load (CSV file)
 
 -----------------------------------------------------------------------------
 
-## Project 2 — Multi Table Orders ETL Pipeline
+## Project 2 — Multi-table SQLite - Orders ETL
 
 ## Overview
 A multi-source ETL pipeline that extracts relational data from a local SQLite database, 
@@ -52,7 +52,7 @@ Extract (SQLite DB two tables) → Transform → Load (CSV file)
 
 -----------------------------------------------------------------------------
 
-## Project 3 - Multi-Source Weather ETL Pipeline
+## Project 3 - Multi-Source (API + SQLite) - Weather ETL
 
 ### Overview
 A multi-source ETL pipeline that extracts city data from a local SQLite database and live weather data from a public API, transforms and merges both sources, and loads the result into a structured SQLite reporting table.
@@ -78,7 +78,7 @@ Extract (SQLite DB + API) → Transform → Load (SQLite Report Table)
 
 -----------------------------------------------------------------------------
 
-## Project 4 — Stock Market ETL Pipeline with Validation Rules
+## Project 4 — Validation rules - Stock Market ETL
 
 ### Overview
 A multi-step ETL pipeline that extracts stock market data from a public financial API,
@@ -117,7 +117,7 @@ Extract → Validate Raw → Transform → Validate Clean → Load
 
 -----------------------------------------------------------------------------
 
-## Project 5 — Multi-Source Orders ETL Pipeline with Branching Logic
+## Project 5 — Branching logic - Customers' Orders ETL
 
 ### Overview
 A multi-source ETL pipeline that extracts customer master data from SQLite and order/cart
