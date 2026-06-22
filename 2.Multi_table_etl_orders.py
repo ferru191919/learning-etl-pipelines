@@ -1,6 +1,13 @@
+# Second Pipeline
+#
+# The goal is to learn:
+# - SQLite tables as data source
+# - Row-level data validation
+
+
 # IMPORTANT DISCLAIMER!!!
-# Before running this pipeline, you must run the '2.0 setup_database.py' (ONLY ONCE)
-# '2.0 ecommerce.db' file will be generated
+# Before running this pipeline, you must run the '2.0_setup_database.py' (ONLY ONCE)
+# '2.0_ecommerce.db' file will be generated
 # this is the SQLite database where this pipeline will extract data from!
 
 
@@ -12,7 +19,7 @@ import logging
 logging.basicConfig(level=logging.INFO)  # production best practices
 logger = logging.getLogger(__name__)     # production best practices
 
-DB_PATH = "2.0 ecommerce.db"
+DB_PATH = "2.0_ecommerce.db"
 USD_TO_EUR = 0.92
 
 

@@ -47,7 +47,7 @@ def transform_users(raw_data):
     # Production Guard
     # If it does not receive raw data, it skips transformation
     if raw_data is None:
-        logger.warning("No clean data received, skipping transforming")
+        logger.warning("No raw data received, skipping transforming")
         return None
 
     clean_users = []      # where I will append dictionaries of clean users data
@@ -56,9 +56,9 @@ def transform_users(raw_data):
         name_parts = user["name"].split(" ", maxsplit=1)  # maxsplit=1 allows to split the full name in 1 first name + multiple last names
         first_name = name_parts[0].strip().title()
         last_name = name_parts[1].strip().title()
-        city = user["address"]["city"].strip().title()
-        street = user["address"]["street"].strip().title()
-        zipcode = user["address"]["zipcode"].strip()
+        city = user["address"]["city"].strip().title()      # nested value
+        street = user["address"]["street"].strip().title()  # nested value
+        zipcode = user["address"]["zipcode"].strip()        # nested value
         email = user["email"].strip().lower()
         phone_parts = user["phone"].split(" x")
         phone_number = phone_parts[0].strip()
