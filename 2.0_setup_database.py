@@ -39,16 +39,16 @@ def setup_database():
         );
 
         INSERT OR IGNORE INTO orders VALUES
-            (1,  1, 'Laptop',     999.99, 'completed', '2024-01-15'),
-            (2,  2, 'Mouse',       25.00, 'completed', '2024-01-16'),
-            (3,  1, 'Keyboard',    75.00, 'cancelled', '2024-01-17'),
-            (4,  3, 'Monitor',    299.99, 'completed', '2024-01-18'),
-            (5,  2, 'Webcam',      89.99, 'pending',   '2024-01-19'),
-            (6,  4, 'Headphones', 149.99, 'completed', '2024-01-20'),
-            (7,  5, 'Desk Chair', 399.99, 'cancelled', '2024-01-21'),
-            (8,  3, 'USB Hub',     35.00, 'completed', '2024-01-22'),
-            (9,  6, 'Laptop',     999.99, 'completed', '2024-01-23'),
-            (10, 7, 'Mouse',       25.00, 'pending',   '2024-01-24');
+            (1,  1, 'laptop',     999.99,        'completed',  '2024-01-15'),
+            (2,  2, 'Mouse',       25,           'completed',  '2024-01-16'),
+            (3,  1, 'Keyboard',    75.00,                ' ',  '2024-01-17'),
+            (4,  3, 'monitor',    299.99,        'completed',  '2024-01-18'),
+            (5,  2, 'Webcam',      89.99,        'pending',    '2024-01-19'),
+            (6,  4, 'headphones', 149.99,        'completed',  '2024-01-20'),
+            (7,  5, 'Desk Chair', 399.99,        'cancelled',  '2024-01-21'),
+            (8,  3, 'USB Hub',    'thirty-five', 'completed',  '2024-01-22'),
+            (9,  6, 'Laptop',     999.99,         'completed', '23.01.2024'),
+            (10, 7, 'mouse',      'twenty-five',        ' ',   '24 January 2024');
     """)
 
     conn.commit()
