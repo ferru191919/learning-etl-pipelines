@@ -80,7 +80,7 @@ def transform_orders(df_orders):
 # MERGE THE TWO TABLES
 def transform_merged(df_users, df_orders):
     if df_orders is None or df_users is None:
-        logger.warning("No raw orders data received, skipping")
+        logger.warning("No transformed data received, skipping")
         return None
 
     df_merged = df_orders.merge(df_users, on="user_id")  # inner join on user_id
@@ -96,6 +96,10 @@ def transform_merged(df_users, df_orders):
 # Load the transformed data into a CSV file
 
 def load(df_merged):
+    if df_merged is None:
+        logger.warning("No data received, skipping")
+        return None
+
     date = datetime.today().strftime('%Y-%m-%d')
     output_file = f"Outputs/orders_clean_{date}.csv"
     df_merged.to_csv(output_file, index=False)  # transforms df into csv , avoids index extra column

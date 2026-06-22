@@ -85,7 +85,7 @@ def transform_users(raw_data):
 
 def load_users(df):
     if df is None:  # Production guard
-        logger.warning("No clean data received, skipping loading")
+        logger.warning("No transformed data received, skipping loading")
         return None
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)   # Creates new folder for output (if it does not exist)
