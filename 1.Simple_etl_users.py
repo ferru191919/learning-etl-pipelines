@@ -57,8 +57,8 @@ def transform_users(raw_data):
         first_name = name_parts[0].strip().title()
         last_name = name_parts[1].strip().title()
         city = user["address"]["city"].strip().title()      # nested value
-        street = user["address"]["street"].strip().title()  # nested value
-        zipcode = user["address"]["zipcode"].strip()        # nested value
+        street = user["address"]["street"].strip().title()
+        zipcode = user["address"]["zipcode"].strip()
         email = user["email"].strip().lower()
         phone_parts = user["phone"].split(" x")
         phone_number = phone_parts[0].strip()
