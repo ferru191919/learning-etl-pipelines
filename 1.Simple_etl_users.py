@@ -1,27 +1,40 @@
+# First Pipeline
+#
+# The goal is to learn:
+# - General concept of Extraction, Transformation, Loading
+# - Production best practices (logging, production guards, ...)
+# - API as data source
+
+
 from datetime import datetime
 import requests
 import pandas as pd
 import os
 import logging
 
+
 logging.basicConfig(level=logging.INFO)  # production best practices
 logger = logging.getLogger(__name__)     # production best practices
 
+
+# GLOBAL VARIABLES
 API_URL = "https://jsonplaceholder.typicode.com/users"
 TIMEOUT = 10
-
 OUTPUT_DIR = "Outputs/"
 
+
+# EXTRACTION
 def extract_users():
     try:
         response = requests.get(API_URL, timeout=TIMEOUT)   # API call
         response.raise_for_status()     # check response status code == 200
-        raw_data = response.json()      # get data from API call
+        raw_data = response.json()      # get data from API call in JSON format
         logger.info(f"Extracted {len(raw_data)} users successfully")  # == 10
         return raw_data
-    except requests.exceptions.HTTPError as e:
+    except requests.exceptions.HTTPError as e:  # API call failed
         logger.error(f"HTTP error: {e}")
         return None
+
 
 # Transformation processes:
 # a. Splitting name into first and last name
@@ -30,8 +43,11 @@ def extract_users():
 # d. Splitting phone in phone_number and extension
 
 def transform_users(raw_data):
-    if raw_data is None:  # Production guard
-        logger.warning("No raw data received, skipping transform")
+
+    # Production Guard
+    # If it does not receive raw data, it skips transformation
+    if raw_data is None:
+        logger.warning("No clean data received, skipping transforming")
         return None
 
     clean_users = []      # where I will append dictionaries of clean users data
@@ -63,6 +79,7 @@ def transform_users(raw_data):
     df = pd.DataFrame(clean_users)  # converts dictionaries into df
     return df
 
+
 # Loading processes:
 # Save the DataFrame as a CSV file inside an output/ folder.
 
@@ -79,10 +96,12 @@ def load_users(df):
     return output_file
 
 
-def main():                         # Logic
+# LOGIC
+def main():
     raw_data = extract_users()
     df = transform_users(raw_data)
     load_users(df)
+
 
 if __name__ == "__main__":         # Guard block ← only runs when YOU run this file
                                     # (e.g. avoids automatic run when imported)
