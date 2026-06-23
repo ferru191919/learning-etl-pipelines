@@ -44,12 +44,10 @@ def extract(conn):      # conn = connection object between Python and the SQLite
 
 # 2. TRANSFORMATION
 #
-# As we got two raw DataFrames, we'll operate two different Transformation functions
-# - transform_users(df_users)
-# - transform_orders(df_orders)
+# Perform some cleaning and then merge the two tables.
 
-def transform_users(df_users):
-    if df_users is None:
+def transform_merged(df_users, df_orders):
+    if df_users is None or df_orders is None:
         logger.warning("No raw users data received, skipping")
         return None
 
@@ -57,14 +55,6 @@ def transform_users(df_users):
     name_parts = df_users["complete_name"].str.split(" ", n=1, expand=True)
     df_users["first_name"] = name_parts[0]
     df_users["last_name"] = name_parts[1]
-
-    return df_users
-
-
-def transform_orders(df_orders):
-    if df_orders is None:
-        logger.warning("No raw orders data received, skipping")
-        return None
 
     # CONSISTENT UPPERCASE
     df_orders["product"] = df_orders["product"].str.upper()
@@ -74,15 +64,7 @@ def transform_orders(df_orders):
     df_orders["status"] = df_orders["status"].replace("", "cancelled")
     df_orders["status"] = df_orders["status"].replace(" ", "cancelled")
 
-    return df_orders
-
-
-# MERGE THE TWO TABLES
-def transform_merged(df_users, df_orders):
-    if df_orders is None or df_users is None:
-        logger.warning("No transformed data received, skipping")
-        return None
-
+    # MERGE
     df_merged = df_orders.merge(df_users, on="user_id")  # inner join on user_id
     df_merged = df_merged[df_merged["status"] != "cancelled"]  # eliminate "cancelled" rows
     df_merged["order_value_eur"] = df_merged["amount_usd"] * USD_TO_EUR  # add new column
@@ -111,8 +93,6 @@ def main():
     with sqlite3.connect(DB_PATH) as conn:  # defined conn object (connection between this file and SQL database)
                                             # Context Manager (auto conn.close())
         df_users, df_orders = extract(conn)
-        df_users = transform_users(df_users)
-        df_orders = transform_orders(df_orders)
         df_merged = transform_merged(df_users, df_orders)
         output_file = load(df_merged)
 
