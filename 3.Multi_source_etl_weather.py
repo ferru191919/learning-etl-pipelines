@@ -8,7 +8,7 @@
 
 # DISCLAIMER!
 #
-# First, run the '3.0 setup_database.py' file to create the SQLite database to extract data from it.
+# First, run the '3.0_setup_database.py' file to create the SQLite database to extract data from it.
 
 
 import pandas as pd
