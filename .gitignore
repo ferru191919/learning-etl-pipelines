@@ -1,8 +1,8 @@
 .DS_Store
 Outputs
 .idea/
-2.0 ecommerce.db
 weather.db
+2.0_ecommerce.db
 3.0 cities.db
 4.0 stocks.db
 5.0_orders_branching.db
