@@ -4,6 +4,7 @@
 # - What validation is
 # - Validation checks
 # - Row level validation
+# - Branching
 
 
 # DATA VALIDATION = Data validation is the process of verifying that data is clean, accurate and ready for use.
@@ -16,6 +17,8 @@
 # ROW-LEVEL VALIDATION: I don't want to invalid whole DB because of some invalid rows. Therefore, I'll build
 #                       a boolean mask (condition = True/False) that identifies which rows respect that condition.
 #                       The rows that respect the condition will create a 'valid' db.
+
+# BRANCHING = when a pipeline splits the flow of data into two or more paths based on some condition.
 
 
 from datetime import datetime
@@ -165,7 +168,9 @@ def transform(valid_quotes):
 
 # 5. LOAD
 #
-# Loading valid and invalid tables into '4.0 stocks.db' database
+# Branching:
+# - loading df_clean into valid_stocks SQLite table
+# - loading invalid_quotes into invalid_stocks SQLite table
 #
 def load(df_clean, invalid_quotes, conn):
 
@@ -173,12 +178,13 @@ def load(df_clean, invalid_quotes, conn):
         logger.warning("Data is missing, skipping")
         return None
 
-    df_clean.to_sql("valid_stock_report", conn, index=False, if_exists="replace")  # transforming df_clean into stock_report sql table
-    logger.info("✅ Loaded 'valid_stock_report' into %s database",
+    # Valid data
+    df_clean.to_sql("valid_stocks", conn, index=False, if_exists="replace")  # transforming df_clean into valid_stocks SQLite table
+    logger.info("✅ Loaded 'valid_stocks' into %s database",
                 "4.0 stocks.db")
 
-    invalid_quotes.to_sql("invalid_stocks", conn, index=False,
-                    if_exists="replace")  # transforming invalid_quotes into invalid_stocks sql table
+    # Invalid data
+    invalid_quotes.to_sql("invalid_stocks", conn, index=False, if_exists="replace")
     logger.info("✅ Loaded 'invalid_stocks' into %s database",
                 "4.0 stocks.db")
 
