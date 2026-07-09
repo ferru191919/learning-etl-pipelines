@@ -19,7 +19,7 @@ def create_fact_order(conn):
         order_id            INTEGER PRIMARY KEY,
         customer_sk         INTEGER NOT NULL,
         order_date          TEXT NOT NULL,
-        amount              REAL NOT NULL,
+        amount              REAL,
         is_delivered        INTEGER,
         FOREIGN KEY (customer_sk) REFERENCES dim_customer(customer_sk)
     );
