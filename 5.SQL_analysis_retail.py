@@ -170,8 +170,8 @@ def validate_purchases(df_purchases):
     mask_invalid_amount = amount_as_float.isna()
     mask_non_positive_amount = amount_as_float <= 0
 
-    # E. is_delivered must be a flag 0/1
-    mask_invalid_is_delivered = ~df["is_delivered"].isin([0, 1])
+    # E. status (is_delivered in target DW) must be a flag 0/1
+    mask_invalid_is_delivered = ~df["status"].isin([0, 1])
 
 
     df.loc[mask_dup_id, "validation_errors"] += ";orderId not unique "
@@ -197,16 +197,86 @@ def validate_purchases(df_purchases):
     return invalid_purchases, valid_purchases
 
 
-# Transform customer raw data
-def transform_customers(valid_customers):
-    logger.info("Transforming %d customers", valid_customers.shape[0])
+# Transform customers data
+#
+# - Match names of target DW columns
+# - Value normalization and cleaning
+#
+def transform(valid_customers):
+
+    if valid_customers is None:
+        logger.warning("No valid customers data extracted, skipping")
+        return None
+
+    logger.info("Transforming %d customers and %d purchases",
+                valid_customers.shape[0])
+
     df = valid_customers.copy()
 
-# 1) Standardize country code
+    # Match columns names of target DW
+    df = df.rename(columns={
+        "customer_id": "customer_source_id",
+        "first_name": "first_name",
+        "last_name": "last_name",
+        "email": "email",
+        "country": "country",
+        "created_at": "created_at"
+    })
+
+    # Normalize and clean values
+    df["first_name"] = df["first_name"].astype(str).str.strip().str.title()
+    df["last_name"] = df["last_name"].astype(str).str.strip().str.title()
+
+    # Normalize email (only non-null)
+    df["email"] = df["email"].astype(str).str.strip().str.lower()
+
+    # Normalize country code to upper-case 2 letters
     df["country"] = df["country"].astype(str).str.strip().str.upper()
 
-# 2) Parse created_at to datetime, then back to ISO string for SQLite
-    df["created_at"] = df["created_at"].pd.to_datetime.
+    df_clean_customers = df
+    return df_clean_customers
+
+
+# Transform purchases data
+#
+# - Match names of target DW columns
+# - Value normalization and cleaning
+#
+def transform_purchases(valid_purchases):
+
+    if valid_purchases is None:
+        logger.warning("No valid purchases data extracted, skipping")
+        return None
+
+    logger.info("Transforming %d purchases", valid_purchases.shape[0])
+    df = valid_purchases.copy()
+
+    # Rename columns to match DW semantics
+    df = df.rename(columns={
+        "id": "order_id",
+        "userId": "customer_source_id",  # will later join to dim_customer on this
+        "orderDate": "order_date",
+        "totalAmount": "amount",
+        "status": "is_delivered",
+    })
+
+    # Normalize is_delivered
+    df["is_delivered"] = df["is_delivered"].map({"delivered": 1}).fillna(0)
+
+    df_clean_purchases = df
+    return df_clean_purchases
+
+
+# Assume dim_customer_df loaded from DW (with customer_sk and customer_source_id)
+fact_staging_df = transform_purchases(valid_purchases)
+dim_customer_df = transform_customers(valid_customers)  # or read back from DW
+
+orders_with_sk = fact_staging_df.merge(
+    dim_customer_df[["customer_source_id", "customer_sk"]],
+    on="customer_source_id",
+    how="left",
+    validate="many_to_one",  # many orders per one customer
+)
 
 
 
@@ -218,6 +288,9 @@ def main():
         invalid_customers, valid_customers = validate_customers(df_customers)
         df_purchases = extract_purchases()
         invalid_purchases, valid_purchases = validate_purchases(df_purchases)
+        df_clean_customers = transform_customers(valid_customers)
+        df_clean_purchases = transform_purchases(valid_purchases)
+
 
 
 
