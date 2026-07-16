@@ -9,3 +9,4 @@ weather.db
 .venv/
 5.0_retail_dw.db
 5.1_customers_data_source.db
+5.0_retail_data_source.db
