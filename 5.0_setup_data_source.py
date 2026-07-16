@@ -26,9 +26,9 @@ def create_customers_table(conn: sqlite3.Connection) -> None:
         customer_id     INTEGER PRIMARY KEY,
         first_name      TEXT NOT NULL,
         last_name       TEXT NOT NULL,
-        email           TEXT UNIQUE,
-        country         TEXT NOT NULL,
-        created_at      TEXT NOT NULL,
+        email           TEXT NOT NULL,
+        country         TEXT,
+        created_at      TEXT,
         CHECK (length(country) = 2)
     );
     """
