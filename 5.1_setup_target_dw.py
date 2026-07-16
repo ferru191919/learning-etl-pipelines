@@ -1,7 +1,6 @@
 # Design a DB schema for loading transformed data to perform analytics
 # Star schema with a fact table and two dimension tables
 
-
 import sqlite3
 import logging
 
