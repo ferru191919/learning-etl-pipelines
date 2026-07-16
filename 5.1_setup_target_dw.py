@@ -49,7 +49,7 @@ def create_dim_customer(conn):
     customer_source_id INTEGER NOT NULL UNIQUE,
     first_name         TEXT NOT NULL,
     last_name          TEXT NOT NULL,
-    email              TEXT,
+    email              TEXT NOT NULL,
     country            TEXT,
     created_at         TEXT
 );
