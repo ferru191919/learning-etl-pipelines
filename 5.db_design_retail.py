@@ -37,7 +37,7 @@ def validate_customers(df_customers):
 
     if df_customers is None or df_customers.empty:
         logger.warning("Customers data is missing, skipping")
-        return pd.DataFrame(), pd.DataFrame   # downstream ETL steps always receive a consistent dataframe type and can safely check .empty without extra None handling.
+        return pd.DataFrame(), pd.DataFrame()   # downstream ETL steps always receive a consistent dataframe type and can safely check .empty without extra None handling.
 
     logger.info("Validating %d customers", df_customers.shape[0])
 
@@ -63,7 +63,9 @@ def validate_customers(df_customers):
     mask_missing_lname = df["last_name"].isnull() | (df["last_name"].astype(str).str.strip() == "")  # last name null or missing = True
 
     # D. email should not be without @
-    mask_invalid_email = ~df["email"].astype(str).str.contains("@", na=False)  # ~ flips True/False values --> if row does not contain @ = True
+    mask_invalid_email = (
+            df["email"].notna()
+            & ~df["email"].astype(str).str.strip().str.contains("@", na=False)) # ~ flips True/False values --> if row does not contain @ = True
 
     # E. country code should not be null, empty, or different formats than two letters
     mask_missing_country = (df["country"].isnull() | (df["country"].astype(str).str.strip() == ""))  # country missing = True
@@ -303,7 +305,7 @@ def enrich_fact_orders(dw_conn, clean_purchases):
 
     if clean_purchases is None or clean_purchases.empty:
         logger.warning("No valid purchases to enrich")
-        return 0
+        return pd.DataFrame(), pd.DataFrame()
 
     dim_customer = pd.read_sql_query(
         "SELECT customer_sk, customer_source_id FROM dim_customer",
