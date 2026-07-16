@@ -1,34 +1,45 @@
-# Design a DB schema for loading transformed data to perform analytics
-# Star schema with a fact table and two dimension tables
+### RUN THIS TO SET UP TARGET DATA WAREHOUSE ###
+
+## The goal is to learn:
+#   - How to design and build a star schema DB
+
+## Structure:
+#   - Fact table --> orders
+#   - Dimension table --> customers
+
 
 import sqlite3
 import logging
 
-logger = logging.getLogger(__name__)
-TARGET_DB = "5.0_retail_dw.db"
+
+TARGET_DB = "5.1_retail_dw.db"
 
 
-# Fact Table
-#
-# References customer surrogate key
+## FACT TABLE ##
+# fact_order_sk = Surrogate Primary Key  --> artificially created key with no business meaning --> safe design
+# UNIQUE constraint because I want only one order_id per row (no SCD)
+# customer_sk = Foreign Key
 #
 def create_fact_order(conn):
     sql = """
     CREATE TABLE IF NOT EXISTS fact_order (
-        order_id            INTEGER PRIMARY KEY,
+        fact_order_sk       INTEGER PRIMARY KEY,  
+        order_id            INTEGER NOT NULL UNIQUE,
         customer_sk         INTEGER NOT NULL,
-        order_date          TEXT NOT NULL,
-        amount              REAL,
-        is_delivered        INTEGER,
+        order_date          TEXT,
+        amount              REAL NOT NULL,
+        quantity            REAL NOT NULL,
+        currency            TEXT NOT NULL,
+        sales_channel       TEXT,
+    
         FOREIGN KEY (customer_sk) REFERENCES dim_customer(customer_sk)
     );
     """
     conn.execute(sql)
 
 
-# Dimensional table
-#
-# I'm using customer_sk as Surrogate Key
+## DIMENSION TABLE ##
+# customer_sk = Surrogate Primary Key
 # UNIQUE constraint because I want only one customer_source_id per row (no SCD)
 #
 def create_dim_customer(conn):
@@ -39,34 +50,18 @@ def create_dim_customer(conn):
     first_name         TEXT NOT NULL,
     last_name          TEXT NOT NULL,
     email              TEXT,
-    country            TEXT NOT NULL,
-    created_at         TEXT NOT NULL
+    country            TEXT,
+    created_at         TEXT
 );
-    """
-    conn.execute(sql)
-
-
-
-# Dimensional table
-def create_dq_rejected_orders(conn):
-    sql = """
-    CREATE TABLE IF NOT EXISTS dq_rejected_orders (
-        id                INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_id          INTEGER,
-        customer_sk       INTEGER,
-        raw_payload       TEXT NOT NULL,
-        validation_errors TEXT NOT NULL,
-        rejected_at       TEXT NOT NULL
-    );
     """
     conn.execute(sql)
 
 
 def main():
     with sqlite3.connect(TARGET_DB) as conn:
+        conn.execute("PRAGMA foreign_keys = ON;")  # SQLite does not enforce foreign keys unless enabled on the connection
         create_dim_customer(conn)
         create_fact_order(conn)
-        create_dq_rejected_orders(conn)
         conn.commit()
 
 
