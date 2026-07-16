@@ -5,6 +5,5 @@ weather.db
 2.0_ecommerce.db
 3.0 cities.db
 4.0 stocks.db
-5.0_orders_branching.db
 .venv/
 5.0_retail_data_source.db

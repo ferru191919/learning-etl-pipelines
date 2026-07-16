@@ -1,10 +1,8 @@
 # Fifth Pipeline
 #
 # The goal is to learn:
-# - How to design a database for analytics (Data Warehouse - star schema)
-# - How to build the DB star schema using SQL --> See '5.0_setup_dw.py'
-# - How to join two tables --> enrich fact table
-# - How to perform SQL queries on clean, transformed data
+# - How to design and build a star schema db --> See '5.1_setup_target_dw.py'
+# - How to populate the tables using SQL
 
 
 import sqlite3
@@ -19,10 +17,10 @@ logger = logging.getLogger(__name__)
 
 SOURCE_DB_PATH = "5.1_customers_data_source.db"
 TARGET_DW_PATH = "5.0_retail_dw.db"
-URL = "https://fakeapi.net/orders"
 
 
 # Extract customers raw data from SQLite table
+#
 def extract_customers(db_conn):
     df_customers = pd.read_sql_query("SELECT * FROM customers", db_conn)
     logger.info("Extracted %d customers", df_customers.shape[0])
@@ -30,7 +28,6 @@ def extract_customers(db_conn):
 
 
 # Validate customers raw data
-#
 # Validation checks must match target DW's structure
 #
 def validate_customers(df_customers):
@@ -69,7 +66,7 @@ def validate_customers(df_customers):
 
     # E. country code should not be null, empty, or different formats than two letters
     mask_missing_country = (df["country"].isnull() | (df["country"].astype(str).str.strip() == ""))  # country missing = True
-    mask_length_country = ~mask_missing_country & (df["country"].astype(str).str.len() != 2)  # country not missing but different length = True
+    mask_length_country = ~mask_missing_country & (df["country"].astype(str).str.strip().str.len() != 2)  # country not missing but different length = True
 
     # F. created_at should not be null, empty, or invalid date
     parsed_dates = pd.to_datetime(df["created_at"], errors="coerce")  # must be convertible to date, otherwise is NaN
@@ -308,10 +305,19 @@ def enrich_fact_orders(dw_conn, clean_purchases):
         return pd.DataFrame(), pd.DataFrame()
 
     dim_customer = pd.read_sql_query(
-        "SELECT customer_sk, customer_source_id FROM dim_customer",
+        "SELECT customer_sk, customer_source_id FROM dim_customer",  # Select columns to join with fact table
         dw_conn
     )
-    df = clean_purchases.merge(dim_customer, on="customer_source_id", how="left")  # Left join
+
+    dim_customer["customer_source_id"] = pd.to_numeric(
+        dim_customer["customer_source_id"], errors="coerce"
+    ).astype("Int64")             # otherwise int vs. object error
+
+    clean_purchases["customer_source_id"] = pd.to_numeric(
+        clean_purchases["customer_source_id"], errors="coerce"
+    ).astype("Int64")               # otherwise int vs. object error
+
+    df = clean_purchases.merge(dim_customer, on="customer_source_id", how="left")  # Left Join
 
     unmatched = df[df["customer_sk"].isna()].copy()
     matched = df[df["customer_sk"].notna()].copy()
@@ -366,14 +372,13 @@ def load_rejected_orders(unmatched_fact_df, invalid_purchases, dw_conn):
         # This creates a single text field that stores the rejected row in a readable form.
         # It first removes validation_errors so that the error message does not get mixed into the original data,
         # then converts every remaining value to string, and finally joins all column values in that row with | .
-        temp["validation_errors"] = temp["validation_errors"]
         temp["rejected_at"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
         temp = temp.rename(columns={"id": "order_id", "userId": "customer_source_id"})
         frames.append(temp[["order_id", "customer_source_id", "raw_payload", "validation_errors", "rejected_at"]])
 
     if unmatched_fact_df is not None and not unmatched_fact_df.empty:
         temp = unmatched_fact_df.copy()
-        temp["raw_payload"] = temp.astype(str).agg(" | ", axis=1)
+        temp["raw_payload"] = temp.astype(str).apply(" | ".join, axis=1)  # joins each row’s values into one string separated by |
         temp["validation_errors"] = "unmatched_customer_source_id"
         temp["rejected_at"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
         frames.append(temp[["order_id", "customer_source_id", "raw_payload", "validation_errors", "rejected_at"]])
@@ -403,7 +408,8 @@ def load_rejected_orders(unmatched_fact_df, invalid_purchases, dw_conn):
 
 # MAIN
 def main():
-    with sqlite3.connect(SOURCE_DB_PATH) as db_conn, sqlite3.connect(TARGET_DW_PATH) as dw_conn:
+    with (sqlite3.connect(SOURCE_DB_PATH) as db_conn,
+          sqlite3.connect(TARGET_DW_PATH) as dw_conn):
         dw_conn.execute("PRAGMA foreign_keys = ON")
 
         df_customers = extract_customers(db_conn)
