@@ -133,7 +133,7 @@ Extract → Validate Raw → Transform → Load (Branch to valid_stocks & invali
 ## Project 5 — Data Warehouse Design - Orders fact table, Customers dimension table
 
 ### Overview
-A multi-step ETL pipeline that extracts retail customer and order data from a SQLite source database, 
+An ETL pipeline that extracts retail customer and order data from a SQLite source database, 
 applies row-level validation rules to identify bad records, transforms valid records into a dimensional 
 warehouse-friendly format, and loads them into a star schema with one customer dimension and one order fact table.
 
@@ -245,19 +245,5 @@ Extract → Validate Raw → Transform → Load Dimension → Enrich Fact → Lo
   - `currency`
   - `sales_channel`
 - Uses upsert logic so repeated runs update existing fact rows instead of duplicating them
-
-### Star Schema Design
-- **Dimension table:** `dim_customer`
-- **Fact table:** `fact_order`
-- **Business key:** `customer_source_id`
-- **Surrogate key:** `customer_sk`
-
-### Learning Goals
-- Practice building a star schema from an operational source
-- Apply row-level validation before transformation
-- Separate valid and invalid business records logically in the pipeline
-- Standardize messy source data before loading a warehouse
-- Use surrogate keys and dimension lookups to populate fact tables
-- Implement idempotent loads with SQLite upsert logic
 
 -----------------------------------------------------------------------------
