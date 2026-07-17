@@ -12,7 +12,6 @@ def get_connection():
     If the file does not exist, it will be created.
     """
     conn = sqlite3.connect(DB_PATH)
-    # Foreign keys must be enabled per connection in SQLite
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
@@ -26,10 +25,10 @@ def create_customers_table(conn: sqlite3.Connection) -> None:
         customer_id     INTEGER PRIMARY KEY,
         first_name      TEXT NOT NULL,
         last_name       TEXT NOT NULL,
-        email           TEXT NOT NULL,
+        email           TEXT,
         country         TEXT,
         created_at      TEXT,
-        CHECK (length(country) = 2)
+        CHECK (country IS NULL OR length(trim(country)) = 2)
     );
     """
     conn.execute(create_table_sql)
@@ -46,8 +45,8 @@ def create_orders_table(conn: sqlite3.Connection) -> None:
         order_id         INTEGER PRIMARY KEY,
         customer_id      INTEGER NOT NULL,
         order_date       TEXT NOT NULL,
-        product_name     TEXT NOT NULL,
-        quantity         INTEGER,
+        amount           REAL NOT NULL,
+        quantity         REAL NOT NULL,
         unit_price       REAL,
         currency         TEXT,
         order_status     TEXT,
@@ -85,51 +84,23 @@ def seed_customers(conn: sqlite3.Connection) -> None:
 def seed_orders(conn: sqlite3.Connection) -> None:
     """
     Insert a deliberately messy orders dataset for pipeline practice.
-
-    Examples of messy-but-valid source data:
-    - inconsistent date formats
-    - product naming variations
-    - nulls in optional fields
-    - different casing / whitespace in categorical fields
-    - negative quantity (return/correction style data)
-    - zero price
-    - country mismatches between customer and shipping destination
     """
     orders = [
-        # Clean-ish row
-        (1001, 1, "2025-01-10", "Tennis Balls", 2, 7.99, "EUR", "shipped", "IT", "online", None),
-
-        # Different date format, upper-case status/channel
-        (1002, 1, "10/01/2025", "tennis balls", 1, 7.99, "EUR", "SHIPPED", "IT", "ONLINE", "repeat order"),
-
-        # Null quantity, trailing spaces in product, mixed-case country
-        (1003, 2, "2025-02-03T14:22:00", "Protein Bar   ", None, 2.49, "EUR", "pending", "it", "store", None),
-
-        # Different product spelling, blank notes
-        (1004, 3, "2025/02/15", "protein-bar", 6, 2.39, "EUR", "Pending", "DE", "Store", ""),
-
-        # Negative quantity to simulate return/correction
-        (1005, 4, "2025-03-01", "Energy Drink", -1, 1.99, "USD", "returned", "US", "retail", "customer return"),
-
-        # Zero unit price
-        (1006, 4, "2025-03-05", "Shaker Bottle", 1, 0.0, "USD", "completed", "US", "Retail", "promo item"),
-
-        # Leading/trailing spaces in status and channel
-        (1007, 5, "2025-04-20 09:30:00", "Whey Protein", 1, 29.90, "EUR", " delivered ", "IT", " online ", None),
-
-        # Shipping country differs from customer country
-        (1008, 5, "2025-04-21", "Creatine Monohydrate", 2, 18.50, "EUR", "delivered", "FR", "online", "gift shipment"),
-
-        # Null currency
-        (1009, 3, "2025-05-01", "Electrolyte Tabs", 3, 5.75, None, "shipped", "DE", "marketplace", None),
-
-        # Duplicate-like business record with formatting differences
-        (1010, 1, "2025-01-10", "TENNIS BALLS", 2, 7.990, "EUR", "Shipped", "IT", "Online", "possible duplicate style row"),
+        (1001, 1, "2025-01-10", 15.98, 2, 7.99, "EUR", "shipped", "IT", "online", None),
+        (1002, 1, "10/01/2025", 7.99, 1, 7.99, "EUR", "SHIPPED", "IT", "ONLINE", "repeat order"),
+        (1003, 2, "2025-02-03T14:22:00", None, None, 2.49, "EUR", "pending", "it", "store", None),
+        (1004, 3, "2025/02/15", 14.34, 6, 2.39, "EUR", "Pending", "DE", "Store", ""),
+        (1005, 4, "2025-03-01", None, -1, 1.99, "USD", "returned", "US", "retail", "customer return"),
+        (1006, 4, "2025-03-05", 0, 1, 0.0, "USD", "completed", "US", "Retail", "promo item"),
+        (1007, 5, "2025-04-20 09:30:00", 29.90, 1, 29.90, "EUR", " delivered ", "IT", " online ", None),
+        (1008, 5, "2025-04-21", 37.00, 2, 18.50, "EUR", "delivered", "FR", "online", "gift shipment"),
+        (1009, 3, "2025-05-01", 57.50, 10, 5.75, None, "shipped", "DE", "marketplace", None),
+        (1010, 1, "2025-01-10", 15.98, 2, 7.99, "EUR", "Shipped", "IT", "Online", "possible duplicate style row"),
     ]
 
     insert_sql = """
     INSERT OR IGNORE INTO orders (
-        order_id, customer_id, order_date, product_name, quantity,
+        order_id, customer_id, order_date, amount, quantity,
         unit_price, currency, order_status, shipping_country,
         sales_channel, notes
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
@@ -151,7 +122,6 @@ def main():
 
         conn.commit()
 
-        # Simple smoke tests
         print("Customers in source DB:")
         cur = conn.execute("SELECT * FROM customers;")
         for row in cur.fetchall():
