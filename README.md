@@ -130,3 +130,134 @@ Extract → Validate Raw → Transform → Load (Branch to valid_stocks & invali
 - Writes all invalid or rejected rows (with their `validation_errors`) to an `invalid_stocks` table
 
 -----------------------------------------------------------------------------
+## Project 5 — Data Warehouse Design - Orders fact table, Customers dimension table
+
+### Overview
+A multi-step ETL pipeline that extracts retail customer and order data from a SQLite source database, 
+applies row-level validation rules to identify bad records, transforms valid records into a dimensional 
+warehouse-friendly format, and loads them into a star schema with one customer dimension and one order fact table.
+
+### Pipeline Architecture
+Extract → Validate Raw → Transform → Load Dimension → Enrich Fact → Load Fact
+
+### What It Does
+
+**Extract**
+- Connects to a SQLite operational source database
+- Extracts raw customer data from the `customers` table
+- Extracts raw order data from the `orders` table
+- Loads both datasets into pandas DataFrames for validation and transformation
+
+**Validate Customers (row-level)**
+- Adds a `validation_errors` column to store row-level error codes
+- Checks `customer_id`:
+  - is present and not empty
+  - can be converted to an integer
+  - is positive
+  - is not duplicated
+- Checks `first_name` and `last_name`:
+  - are present and not empty
+- Checks `email`:
+  - is present and not empty
+  - contains `@`
+- Checks `country`:
+  - if present, must be a 2-letter uppercase country code
+- Checks `created_at`:
+  - must be parseable as a date/time value
+- Splits the dataset into:
+  - `valid_customers`
+  - `invalid_customers`
+
+**Validate Orders (row-level)**
+- Adds a `validation_errors` column to store row-level error codes
+- Checks `order_id`:
+  - is present and not empty
+  - can be converted to an integer
+  - is positive
+  - is not duplicated
+- Checks `customer_id`:
+  - is present and not empty
+  - can be converted to an integer
+  - is positive
+- Checks `order_date`:
+  - must be parseable as a date
+- Checks `amount`:
+  - is present and not empty
+  - can be converted to numeric
+  - is strictly positive
+- Checks `quantity`:
+  - is present and not empty
+  - can be converted to numeric
+  - is not negative
+- Checks `currency`:
+  - is present and not empty
+- Splits the dataset into:
+  - `valid_orders`
+  - `invalid_orders`
+
+**Transform Customers**
+- Copies `valid_customers` into a clean working DataFrame
+- Renames and standardizes the source business key:
+  - `customer_id` → `customer_source_id`
+- Cleans text fields:
+  - trims spaces from names
+  - converts names to title case
+  - lowercases and trims email values
+  - uppercases country codes
+- Converts `created_at` to a standard datetime string format
+- Drops duplicate customers by `customer_source_id`
+- Produces a clean customer dataset ready for the dimension table
+
+**Transform Orders**
+- Copies `valid_orders` into a clean working DataFrame
+- Renames and standardizes the foreign business key:
+  - `customer_id` → `customer_source_id`
+- Standardizes fields:
+  - converts `order_id` to integer
+  - converts `order_date` to `YYYY-MM-DD`
+  - converts `amount` to float
+  - converts `quantity` to float
+  - uppercases `currency`
+  - lowercases and trims `sales_channel`
+- Produces a clean orders dataset ready for dimensional enrichment
+
+**Load Customer Dimension**
+- Loads clean customer records into the `dim_customer` table
+- Uses `customer_source_id` as the business key for upsert logic
+- Updates existing customer rows when the same source customer already exists
+- Inserts new customer rows when the source customer is new
+
+**Enrich Fact Orders**
+- Reads `customer_sk` and `customer_source_id` from `dim_customer`
+- Joins clean orders to the customer dimension on `customer_source_id`
+- Replaces the source business key with the warehouse surrogate key `customer_sk`
+- Keeps only matched rows for fact loading
+- Produces the final `fact_df` dataset for the fact table
+
+**Load Order Fact**
+- Loads enriched order rows into the `fact_order` table
+- Stores:
+  - `order_id`
+  - `customer_sk`
+  - `order_date`
+  - `amount`
+  - `quantity`
+  - `currency`
+  - `sales_channel`
+- Uses upsert logic so repeated runs update existing fact rows instead of duplicating them
+
+### Star Schema Design
+- **Dimension table:** `dim_customer`
+- **Fact table:** `fact_order`
+- **Business key:** `customer_source_id`
+- **Surrogate key:** `customer_sk`
+
+### Learning Goals
+- Practice building a star schema from an operational source
+- Apply row-level validation before transformation
+- Separate valid and invalid business records logically in the pipeline
+- Standardize messy source data before loading a warehouse
+- Use surrogate keys and dimension lookups to populate fact tables
+- Implement idempotent loads with SQLite upsert logic
+
+-----------------------------------------------------------------------------
