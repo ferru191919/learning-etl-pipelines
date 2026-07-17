@@ -17,8 +17,7 @@ TARGET_DB = "5.1_retail_dw.db"
 
 
 ## FACT TABLE ##
-# fact_order_sk = Surrogate Primary Key  --> artificially created key with no business meaning -->
-# Slow Change Dimension (SCD) = In case order_id changes dimension attributes, we store same order_id before and after
+# fact_order_sk = Surrogate Primary Key  --> artificially created key with no business meaning
 # customer_sk = Foreign Key
 #
 def create_fact_order(conn):
