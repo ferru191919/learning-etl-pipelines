@@ -6,8 +6,8 @@ Each of the four scripts is one “mini‑pipeline” that focuses on a specific
 - The *second pipeline* works with SQLite as a data source, using a connection object and joining multiple tables. 
 - The *third pipeline* combines multiple data sources (database + dynamic API), and shows how to handle nested JSON and flatten it with json_normalize. 
 - The *fourth pipeline* adds data validation on top of ETL: presence checks, type checks, row‑level validation using boolean masks, and branching into “valid” vs “invalid” tables.
-
----
+- The *fifth pipeline* expands the project into a small warehouse-style ETL flow. It introduces a star schema design by transforming raw data to match data warehouse fields, enriching the fact table with dimension table attributes, and loading the results into the warehouse.
+------------------------------------------------------------
 
 ## Project 1 — REST API - Users ETL
 
