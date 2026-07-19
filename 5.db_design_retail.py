@@ -3,6 +3,7 @@
 # The goal is to learn:
 # - How to design and build a star schema db --> See '5.1_setup_target_dw.py'
 # - How to populate DW tables using SQL
+# - Slowly Changing Dimensions Type 1 --> overwrites history changes.
 
 
 import sqlite3
@@ -114,7 +115,7 @@ def extract_orders(db_conn):
     return df_orders
 
 
-# Validate purchases raw data
+# Validate orders raw data
 def validate_orders(df_orders):
 
     if df_orders is None or df_orders.empty:
@@ -278,6 +279,8 @@ def transform_orders(valid_orders):
 
 # Load dim_customers
 #
+# must overwrite history changes --> SCD Type 1
+#
 def load_dim_customer(clean_customers, dw_conn):
 
     if clean_customers is None or clean_customers.empty:
@@ -299,6 +302,10 @@ def load_dim_customer(clean_customers, dw_conn):
            country    = excluded.country,
            created_at = excluded.created_at
        """
+    # ON CONFLICT DO UPDATE is a Slowly Changing Dimensions Type 1
+    # meaning it does not keep history track, but overwrites changes
+    # customer_source_id must have a UNIQUE constraint in DB design
+
 
     # customer_source_id was saved as byte instead of integer
     clean_customers["customer_source_id"] = pd.to_numeric(clean_customers["customer_source_id"], errors="coerce").astype("Int64")
@@ -321,7 +328,7 @@ def enrich_fact_orders(dw_conn, clean_orders):
         return pd.DataFrame()
 
     dim_customer = pd.read_sql_query(
-        "SELECT customer_sk, customer_source_id FROM dim_customer",  # Select columns to join with fact table
+        "SELECT customer_sk, customer_source_id FROM dim_customer",  # Select columns to join into fact table
         dw_conn
     )
 
@@ -364,6 +371,10 @@ def load_fact_order(fact_df, dw_conn):
         currency = excluded.currency,
         sales_channel = excluded.sales_channel
     """
+    # ON CONFLICT DO UPDATE is a Slow Changing Dimensions Type 1
+    # meaning it does not keep history track, but overwrites changes
+    # order_id must have a UNIQUE constraint in DB design
+
 
     # order_id was saved as byte instead of integer
     fact_df["order_id"] = pd.to_numeric(fact_df["order_id"], errors="coerce").astype("Int64")
