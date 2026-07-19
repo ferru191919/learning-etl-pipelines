@@ -2,7 +2,8 @@
 
 ## The goal is to learn:
 #   - How to design and build a star schema DB
-#   - Safe Standards (e.g. Surrogate Keys)
+#   - Surrogate Keys
+#   - Slowly Changing Dimensions Type 1 --> UNIQUE constraints
 
 ## Structure:
 #   - Fact table --> orders
@@ -17,14 +18,14 @@ TARGET_DB = "5.1_retail_dw.db"
 
 
 ## FACT TABLE ##
-# fact_order_sk = Surrogate Primary Key  --> artificially created key with no business meaning
+# order_id = PK
 # customer_sk = Foreign Key
 #
 def create_fact_order(conn):
     sql = """
-    CREATE TABLE IF NOT EXISTS fact_order (
-        fact_order_sk       INTEGER PRIMARY KEY,  
-        order_id            INTEGER NOT NULL,
+    CREATE TABLE IF NOT EXISTS fact_order (  
+        order_sk            INTEGER PRIMARY KEY,
+        order_id            INTEGER NOT NULL UNIQUE,
         customer_sk         INTEGER NOT NULL,
         order_date          TEXT,
         amount              REAL NOT NULL,
@@ -39,13 +40,13 @@ def create_fact_order(conn):
 
 
 ## DIMENSION TABLE ##
-# customer_sk = Surrogate Primary Key
+# customer_sk = PK  --> Artificial key with no business meaning --> It'll be useful for SCD Type 2
 #
 def create_dim_customer(conn):
     sql = """
     CREATE TABLE IF NOT EXISTS dim_customer (
     customer_sk        INTEGER PRIMARY KEY,
-    customer_source_id INTEGER NOT NULL,
+    customer_source_id INTEGER NOT NULL UNIQUE,
     first_name         TEXT NOT NULL,
     last_name          TEXT NOT NULL,
     email              TEXT NOT NULL,
