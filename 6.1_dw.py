@@ -17,9 +17,6 @@ TARGET_DB = "6.1_retail_dw.db"
 # fact_order_sk = Surrogate Primary Key  --> artificially created key with no business meaning
 # customer_sk = Foreign Key
 #
-# Differently from 5.1 db, here order_id DOES NOT have UNIQUE constraint because of SCD Type 2
-# it keeps history of changes.
-#
 def create_fact_order(conn):
     sql = """
     CREATE TABLE IF NOT EXISTS fact_order (
@@ -31,6 +28,9 @@ def create_fact_order(conn):
         quantity            REAL NOT NULL,
         currency            TEXT NOT NULL,
         sales_channel       TEXT,
+        effective_from      TEXT NOT NULL,
+        effective_to        TEXT NOT NULL,
+        is_current          INTEGER NOT NULL
 
         FOREIGN KEY (customer_sk) REFERENCES dim_customer(customer_sk)
     );
@@ -41,7 +41,10 @@ def create_fact_order(conn):
 ## DIMENSION TABLE ##
 # customer_sk = Surrogate Primary Key
 #
-# For the same reason, customer_source_id is not unique --> SCD Type 2.
+# Differently from SCD Type 1, here customer_source_id DOES NOT have UNIQUE constraint.
+# It keeps history of changes, so we might have multiple Ids as customer has changed attributes over time.
+#
+# effective_from, effective_to shows the validity window when that version of the value was being active.
 #
 def create_dim_customer(conn):
     sql = """
@@ -52,45 +55,10 @@ def create_dim_customer(conn):
     last_name          TEXT NOT NULL,
     email              TEXT NOT NULL,
     country            TEXT,
-    created_at         TEXT
-);
-    """
-    conn.execute(sql)
-
-
-# STAGING customer table
-#
-def staging_customer(conn):
-    sql = """
-    CREATE TABLE IF NOT EXISTS stg_customer (
-    stg_customer_sk    INTEGER PRIMARY KEY AUTOINCREMENT,
-    customer_id        INTEGER,
-    first_name         TEXT,
-    last_name          TEXT,
-    email              TEXT,
-    country            TEXT,
     created_at         TEXT,
-    etl_loaded_at      TEXT NOT NULL,
-    batch_id           TEXT NOT NULL
-);
-    """
-    conn.execute(sql)
-
-# STAGING order table
-#
-def staging_order(conn):
-    sql = """
-    CREATE TABLE IF NOT EXISTS stg_order (
-    stg_order_id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    order_id            INTEGER,
-    customer_id         INTEGER,
-    order_date          TEXT,
-    amount              REAL,
-    quantity            REAL,
-    currency            TEXT,
-    sales_channel       TEXT,
-    etl_loaded_at       TEXT NOT NULL,
-    batch_id            TEXT NOT NULL
+    effective_from     TEXT NOT NULL,
+    effective_to       TEXT NOT NULL,
+    is_current         INTEGER NOT NULL
 );
     """
     conn.execute(sql)
@@ -102,8 +70,6 @@ def main():
             "PRAGMA foreign_keys = ON;")  # SQLite does not enforce foreign keys unless enabled on the connection
         create_dim_customer(conn)
         create_fact_order(conn)
-        staging_customer(conn)
-        staging_order(conn)
         conn.commit()
 
 
