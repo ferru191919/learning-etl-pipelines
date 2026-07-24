@@ -18,8 +18,9 @@ TARGET_DB = "5.1_retail_dw.db"
 
 
 ## FACT TABLE ##
-# order_id = PK
+# order_sk = Surrogate PK --> artificial key with no business value --> protects you if business key changes.
 # customer_sk = Foreign Key
+# order_id = Business Key --> granularity = 1 row per order --> UNIQUE constraint.
 #
 def create_fact_order(conn):
     sql = """
@@ -40,7 +41,9 @@ def create_fact_order(conn):
 
 
 ## DIMENSION TABLE ##
-# customer_sk = PK  --> Artificial key with no business meaning --> It'll be useful for SCD Type 2
+# customer_sk = Surrogate PK
+# customer_source_id = business key --> UNIQUE constraint because SCD Type 1.
+# SCD Type 1 == if customer attributes change, new ones overwrite the old ones --> No history of changes.
 #
 def create_dim_customer(conn):
     sql = """
