@@ -302,9 +302,9 @@ def load_dim_customer(clean_customers, dw_conn):
            country    = excluded.country,
            created_at = excluded.created_at
        """
-    # ON CONFLICT DO UPDATE is a Slowly Changing Dimensions Type 1
-    # meaning it does not keep history track, but overwrites changes
-    # customer_source_id must have a UNIQUE constraint in DB design
+    # ON CONFLICT DO UPDATE is a Slowly Changing Dimensions Type 1.
+    # meaning it does not keep history track of dimension, but overwrites changes.
+    # customer_source_id must have a UNIQUE constraint in DB design.
 
 
     # customer_source_id was saved as byte instead of integer
@@ -312,7 +312,8 @@ def load_dim_customer(clean_customers, dw_conn):
     clean_customers["customer_source_id"] = clean_customers["customer_source_id"].astype(object).where(clean_customers["customer_source_id"].notna(), None)
     clean_customers["customer_source_id"] = clean_customers["customer_source_id"].apply(lambda x: int(x) if x is not None else None)
 
-    rows = list(clean_customers.itertuples(index=False, name=None))  # converts df rows into a list of tuples
+    # Insert values from clean_customers df into dim table
+    rows = list(clean_customers.itertuples(index=False, name=None))  # converts clean_customers rows into a list of tuples
     dw_conn.executemany(sql, rows)     # runs the same SQL statement once for every tuple in rows.
     dw_conn.commit()   # permanently saves the inserts to the database.
     logger.info("Loaded %d customers into dim_customer", len(rows))
@@ -363,25 +364,13 @@ def load_fact_order(fact_df, dw_conn):
         order_id, customer_sk, order_date, amount, quantity, currency, sales_channel
     )
     VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(order_id) DO UPDATE SET
-        customer_sk = excluded.customer_sk,
-        order_date = excluded.order_date,
-        amount = excluded.amount,
-        quantity = excluded.quantity,
-        currency = excluded.currency,
-        sales_channel = excluded.sales_channel
     """
-    # ON CONFLICT DO UPDATE is a Slow Changing Dimensions Type 1
-    # meaning it does not keep history track, but overwrites changes
-    # order_id must have a UNIQUE constraint in DB design
+    # ON CONFLICT does not apply here because it's not a dim table
+    # SCD is only for dimensions.
 
 
-    # order_id was saved as byte instead of integer
-    fact_df["order_id"] = pd.to_numeric(fact_df["order_id"], errors="coerce").astype("Int64")
-    fact_df["order_id"] = fact_df["order_id"].astype(object).where(fact_df["order_id"].notna(), None)
-    fact_df["order_id"] = fact_df["order_id"].apply(lambda x: int(x) if x is not None else None)
-
-    rows = list(fact_df.itertuples(index=False, name=None))
+    # Insert fact_df values into fact table
+    rows = list(fact_df.itertuples(index=False, name=None)) # converts clean_customers rows into a list of tuples
     dw_conn.executemany(sql, rows)
     dw_conn.commit()
     logger.info("Loaded %d fact rows into fact_order", len(rows))
