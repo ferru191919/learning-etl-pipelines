@@ -1,7 +1,7 @@
 ### RUN THIS TO SET UP TARGET DATA WAREHOUSE ###
 
 ## The goal is to learn:
-#   - Design Data Warehouse for SCD Type 2
+#   - Slowly Changing Dimensions Type 2
 
 ## Structure:
 #   - Fact table --> orders
@@ -10,27 +10,26 @@
 
 import sqlite3
 
+
 TARGET_DB = "6.1_retail_dw.db"
 
 
 ## FACT TABLE ##
-# fact_order_sk = Surrogate Primary Key  --> artificially created key with no business meaning
+# order_sk = Surrogate PK --> artificial key with no business value --> protects you if business key changes.
 # customer_sk = Foreign Key
+# order_id = Business Key --> granularity = 1 row per order --> UNIQUE constraint.
 #
 def create_fact_order(conn):
     sql = """
-    CREATE TABLE IF NOT EXISTS fact_order (
-        fact_order_sk       INTEGER PRIMARY KEY,  
-        order_id            INTEGER NOT NULL,
+    CREATE TABLE IF NOT EXISTS fact_order (  
+        order_sk            INTEGER PRIMARY KEY,
+        order_id            INTEGER NOT NULL UNIQUE,
         customer_sk         INTEGER NOT NULL,
         order_date          TEXT,
         amount              REAL NOT NULL,
         quantity            REAL NOT NULL,
         currency            TEXT NOT NULL,
         sales_channel       TEXT,
-        effective_from      TEXT NOT NULL,
-        effective_to        TEXT NOT NULL,
-        is_current          INTEGER NOT NULL
 
         FOREIGN KEY (customer_sk) REFERENCES dim_customer(customer_sk)
     );
@@ -39,12 +38,9 @@ def create_fact_order(conn):
 
 
 ## DIMENSION TABLE ##
-# customer_sk = Surrogate Primary Key
-#
-# Differently from SCD Type 1, here customer_source_id DOES NOT have UNIQUE constraint.
-# It keeps history of changes, so we might have multiple Ids as customer has changed attributes over time.
-#
-# effective_from, effective_to shows the validity window when that version of the value was being active.
+# customer_sk = Surrogate PK
+# customer_source_id = business key --> NOT UNIQUE constraint because SCD Type 2.
+# SCD Type 2 == if customer attributes change, a new row will be created --> Keeps history of changes.
 #
 def create_dim_customer(conn):
     sql = """
@@ -63,6 +59,8 @@ def create_dim_customer(conn):
     """
     conn.execute(sql)
 
+    # effective_from , effective_to define the range of time when the row was the latest version of that customer_id.
+    # is_current defines whether that row is the latest version.
 
 def main():
     with sqlite3.connect(TARGET_DB) as conn:
