@@ -359,6 +359,20 @@ def load_fact_order(fact_df, dw_conn):
         logger.warning("No fact rows to load")
         return 0
 
+    # If facts already exist, I don't want to load duplicates
+    existing_orders = pd.read_sql_query(
+        "SELECT order_id FROM fact_order",
+        dw_conn
+    )
+
+    new_fact_df = fact_df[~fact_df["order_id"].isin(existing_orders["order_id"])].copy()
+
+    if new_fact_df.empty:
+        logger.info("No new fact rows to load")
+        return 0
+
+
+    # Query for loading
     sql = """
     INSERT INTO fact_order (
         order_id, customer_sk, order_date, amount, quantity, currency, sales_channel
@@ -368,6 +382,12 @@ def load_fact_order(fact_df, dw_conn):
     # ON CONFLICT does not apply here because it's not a dim table
     # SCD is only for dimensions.
 
+
+    # order_id was saved as byte instead of integer
+    # otherwise it's not saved as integer in dw table
+    fact_df["order_id"] = pd.to_numeric(fact_df["order_id"], errors="coerce").astype("Int64")  # should be convertible to int
+    fact_df["order_id"] = fact_df["order_id"].astype(object).where(fact_df["order_id"].notna(), None)
+    fact_df["order_id"] = fact_df["order_id"].apply(lambda x: int(x) if x is not None else None)  # None if it's not integer
 
     # Insert fact_df values into fact table
     rows = list(fact_df.itertuples(index=False, name=None)) # converts clean_customers rows into a list of tuples
