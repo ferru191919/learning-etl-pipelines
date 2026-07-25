@@ -1,12 +1,14 @@
 # learning-etl-pipelines
 
 This project is a hands‑on playground for learning how to build small, realistic ETL pipelines in Python step by step.
-Each of the four scripts is one “mini‑pipeline” that focuses on a specific set of skills:
+Each script is one “mini‑pipeline” that focuses on a specific set of skills:
 - The *first pipeline* introduces the core ETL flow (extract → transform → load), pulling data from an API, adding logging, and using simple production guards. 
 - The *second pipeline* works with SQLite as a data source, using a connection object and joining multiple tables. 
 - The *third pipeline* combines multiple data sources (database + dynamic API), and shows how to handle nested JSON and flatten it with json_normalize. 
 - The *fourth pipeline* adds data validation on top of ETL: presence checks, type checks, row‑level validation using boolean masks, and branching into “valid” vs “invalid” tables.
-- The *fifth pipeline* expands the project into a small warehouse-style ETL flow. It introduces a star schema design by transforming raw data to match data warehouse fields, enriching the fact table with dimension table attributes, and loading the results into the warehouse.
+- The *fifth pipeline* expands the project into a small warehouse-style ETL flow. It introduces a star schema designed with SQL, with an order_fact_table and a customer_dim_table. 
+- The *sixth pipeline* introduces incremental loading with historical change tracking, especially Slowly Changing Dimensions Type 2.
+
 ------------------------------------------------------------
 
 ## Project 1 — REST API - Users ETL
@@ -247,3 +249,79 @@ Extract → Validate Raw → Transform → Load Dimension → Enrich Fact → Lo
 - Uses upsert logic so repeated runs update existing fact rows instead of duplicating them
 
 -----------------------------------------------------------------------------
+## Project 6 — Slowly Changing Dimensions Type 2 - Retail Customers & Orders
+
+### Overview
+An ETL pipeline that extracts retail customer and order data from a SQLite source database,
+applies row-level validation rules to identify bad records, transforms valid records into a
+dimensional warehouse-friendly format, and loads them into a star schema using **SCD Type 2**
+logic for the customer dimension — preserving the full history of changes across pipeline runs.
+
+### Pipeline Architecture
+Extract → Validate Raw → Transform → Load Dimension (SCD2) → Enrich Fact → Load Fact
+
+### What It Does
+
+**Extract**
+- Connects to a SQLite operational source database (`5.0_retail_data_source.db`)
+- Extracts raw customer data from the `customers` table
+- Extracts raw order data from the `orders` table
+- Loads both datasets into pandas DataFrames for validation and transformation
+
+**Validate Customers (row-level)**
+- Adds a `validation_errors` column to store row-level error codes
+- Checks `customer_id`: is present and not empty, can be converted to an integer, is positive, is not duplicated
+- Checks `first_name` and `last_name`: are present and not empty
+- Checks `email`: is present, not empty, and contains `@`
+- Checks `country`: if present, must be a 2-letter uppercase country code
+- Checks `created_at`: must be parseable as a date/time value
+- Splits the dataset into `valid_customers` and `invalid_customers`
+
+**Validate Orders (row-level)**
+- Adds a `validation_errors` column to store row-level error codes
+- Checks `order_id`: is present and not empty, can be converted to an integer, is positive, is not duplicated
+- Checks `customer_id`: is present and not empty, can be converted to an integer, is positive
+- Checks `order_date`: must be parseable as a date
+- Checks `amount`: is present, can be converted to numeric, is strictly positive
+- Checks `quantity`: is present, can be converted to numeric, is not negative
+- Checks `currency`: is present and not empty
+- Splits the dataset into `valid_orders` and `invalid_orders`
+
+**Transform Customers**
+- Renames `customer_id` → `customer_source_id`
+- Trims spaces and converts names to title case, lowercases email, uppercases country code
+- Converts `created_at` to `YYYY-MM-DD HH:MM:SS` format
+- Drops duplicate customers by `customer_source_id`
+- Produces a clean dataset ready for SCD2 dimension loading
+
+**Transform Orders**
+- Renames `customer_id` → `customer_source_id`
+- Converts `order_id` to integer, `order_date` to `YYYY-MM-DD`, `amount` and `quantity` to float
+- Uppercases `currency`, lowercases and trims `sales_channel`
+- Produces a clean dataset ready for dimensional enrichment
+
+**Load Customer Dimension (SCD Type 2)**
+- Implements **Slowly Changing Dimension Type 2** with **incremental loading** — does not reload from scratch on each run
+- Processes one customer at a time using `.itertuples()` and queries the dimension for the current active row (`is_current = 1`)
+- Applies three cases:
+  - **Case 1 — New customer**: inserts the first version with `effective_from = load_ts`, `effective_to = 9999-12-31 23:59:59`, `is_current = 1`
+  - **Case 2 — Existing customer, no change**: skips the row with no writes
+  - **Case 3 — Existing customer, changed**: expires the old row (`effective_to = load_ts`, `is_current = 0`), then inserts a new current version
+- Uses a shared `load_ts` batch timestamp so old rows close exactly when new rows open
+- Tracks and logs the number of rows inserted and rows expired per run
+
+**Enrich Fact Orders**
+- Reads `customer_sk` and `customer_source_id` from `dim_customer`
+- Joins clean orders to the customer dimension on `customer_source_id` (left join)
+- Replaces the source business key with the warehouse surrogate key `customer_sk`
+- Keeps only matched rows for fact loading
+
+**Load Order Fact**
+- Reads existing `order_id` values from `fact_order` to prevent duplicate inserts
+- Filters out already-loaded orders before inserting
+- Loads only net-new enriched order rows into the `fact_order` table, storing:
+  `order_id`, `customer_sk`, `order_date`, `amount`, `quantity`, `currency`, `sales_channel`
+
+-----------------------------------------------------------------------------
+
+
