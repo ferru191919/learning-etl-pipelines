@@ -130,8 +130,11 @@ Extract → Validate Raw → Transform → Load Dimension (SCD Type 1) → Enric
 ## Learning Step 6
 
 ### Overview
-Takes pipeline 5 functions exepts load dim_customer functions. The goal is to understand the difference between 
-SCD Type 1 and Type 2. Also load fact_orders is different to implement incremental loading differently from pipeline 5.
+Pipeline 6 reuses the same extract, validate, and transform steps from Pipeline 5. 
+The main change is in the loading phase: the customer dimension is loaded using SCD Type 2, so historical changes are 
+preserved instead of overwritten. The fact table is then enriched through a merge that uses the dimension validity 
+window, ensuring each order is linked to the correct customer version at the time of the event. 
+This pipeline is designed to highlight the difference between SCD Type 1 and Type 2.
 
 ### Setup
 Before running this pipeline, run the setup scripts once:
