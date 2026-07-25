@@ -110,15 +110,24 @@ def seed_orders(conn: sqlite3.Connection) -> None:
 
 
 def main():
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = get_connection()
+
     try:
         create_customers_table(conn)
         create_orders_table(conn)
 
         seed_customers(conn)
         seed_orders(conn)
+
+        # Simulate a source-system change --> customer_id = 1 changes first_name
+        conn.execute("""
+                   UPDATE customers
+                   SET first_name = 'Luke'
+                   WHERE customer_id = 1
+                     AND first_name = 'Luca'
+               """)
 
         conn.commit()
 
