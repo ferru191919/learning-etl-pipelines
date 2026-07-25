@@ -445,7 +445,7 @@ def load_dim_customer(clean_customers, dw_conn):
     return rows_inserted
 
 
-# Join fact_order with dim_customer
+# Join fact_order with dim_customer using SCD Type 2 validity window
 #
 def enrich_fact_orders(dw_conn, clean_orders):
 
@@ -454,14 +454,36 @@ def enrich_fact_orders(dw_conn, clean_orders):
         return pd.DataFrame()
 
     dim_customer = pd.read_sql_query(
-        "SELECT customer_sk, customer_source_id FROM dim_customer",  # Select columns to join into fact table
+        """
+        SELECT
+            customer_sk,
+            customer_source_id,
+            effective_from,
+            effective_to
+        FROM dim_customer
+        """,
         dw_conn
     )
 
-    df = clean_orders.merge(dim_customer, on="customer_source_id", how="left")  # Left Join
+    # Convert date columns to datetime so we can compare them correctly
+    orders_df = clean_orders.copy()
+    orders_df["order_date"] = pd.to_datetime(orders_df["order_date"], errors="coerce")
 
-    # unmatched = df[df["customer_sk"].isna()].copy()  # customer_sk null after left join
-    matched = df[df["customer_sk"].notna()].copy()
+    dim_customer["effective_from"] = pd.to_datetime(dim_customer["effective_from"], errors="coerce")
+    dim_customer["effective_to"] = pd.to_datetime(dim_customer["effective_to"], errors="coerce")
+
+    # First join on the business key
+    merged = orders_df.merge(
+        dim_customer,
+        on="customer_source_id",
+        how="left"
+    )
+
+    # Keep only the customer version valid when the order happened
+    matched = merged[
+        (merged["order_date"] >= merged["effective_from"]) &
+        (merged["order_date"] < merged["effective_to"])
+    ].copy()
 
     fact_df = matched[[
         "order_id",
@@ -473,6 +495,10 @@ def enrich_fact_orders(dw_conn, clean_orders):
         "sales_channel"
     ]].copy()
 
+    # Optional: convert order_date back to string if you want the same style as before
+    fact_df["order_date"] = fact_df["order_date"].dt.strftime("%Y-%m-%d")
+
+    logger.info("Enriched %d fact rows", fact_df.shape[0])
     return fact_df
 
 
