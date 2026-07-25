@@ -479,7 +479,7 @@ def enrich_fact_orders(dw_conn, clean_orders):
         how="left"
     )
 
-    # Keep only the customer version valid when the order happened
+    # Keep only the customer version valid when the order happened (in case dimension changed)
     matched = merged[
         (merged["order_date"] >= merged["effective_from"]) &
         (merged["order_date"] < merged["effective_to"])
