@@ -3,9 +3,9 @@ Outputs
 .idea/
 .venv/
 weather.db
-2.0_ecommerce.db
-3.0 cities.db
-4.0 stocks.db
-5.0_retail_data_source.db
-5.1_retail_dw.db
-6.1_retail_dw.db
+Learning Step 2/2.0_ecommerce.db
+Learning Step 3/3.0 cities.db
+Learning Step 4/4.0 stocks.db
+Learning Step 5/5.0_retail_data_source.db
+Learning Step 5/5.1_retail_dw.db
+Learning Step 6/6.1_retail_dw.db
