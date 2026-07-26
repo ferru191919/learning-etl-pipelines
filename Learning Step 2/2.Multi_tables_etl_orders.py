@@ -16,6 +16,7 @@ from datetime import datetime
 import pandas as pd
 import sqlite3
 import logging
+import os
 
 
 logging.basicConfig(level=logging.INFO)  # production best practices
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)     # production best practices
 
 DB_PATH = "2.0_ecommerce.db"
 USD_TO_EUR = 0.92
+OUTPUT_DIR = "../Outputs/"
 
 
 # 1. EXTRACT
@@ -82,9 +84,10 @@ def load(df_merged):
         logger.warning("No data received, skipping")
         return None
 
+    os.makedirs(OUTPUT_DIR, exist_ok=True)  # Creates new folder for output (if it does not exist)
     date = datetime.today().strftime('%Y-%m-%d')
-    output_file = f"Outputs/orders_clean_{date}.csv"
-    df_merged.to_csv(output_file, index=False)  # transforms df into csv , avoids index extra column
+    output_file = f'{OUTPUT_DIR}simple_etl_users_output_{date}.csv'  # Output file name
+    df_merged.to_csv(output_file, index=False)  # Transforms df into csv file
     logger.info(f"{output_file} loaded successfully!")
     return output_file
 
