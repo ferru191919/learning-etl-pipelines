@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-SOURCE_DB_PATH = "5.0_retail_data_source.db"
+SOURCE_DB_PATH = "../Learning Step 5/5.0_retail_data_source.db"
 TARGET_DW_PATH = "6.1_retail_dw.db"
 
 
