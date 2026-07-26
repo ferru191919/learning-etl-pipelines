@@ -2,6 +2,7 @@
 # You must run this file (only once) to create the database for Exercise '2.Multi_tables_etl_orders.py'
 # This SQLite DB will be the data source for the 'extract' function in Exercise 2
 
+
 import sqlite3
 
 DB_PATH = "2.0_ecommerce.db"
