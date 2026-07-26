@@ -4,6 +4,9 @@
 # - Slowly Changing Dimensions (SCD) Type 2
 # - Incremental Loading
 
+## WARNING!!
+# RUN "Learning Step 5/5.0_setup_data_source.py" before this pipeline"
+
 
 import sqlite3
 import pandas as pd
