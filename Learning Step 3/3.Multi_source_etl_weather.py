@@ -6,8 +6,7 @@
 # - Nested JSON and normalization (json_normalize)
 
 
-# DISCLAIMER!
-#
+# DISCLAIMER
 # First, run the '3.0_setup_database.py' file to create the SQLite database to extract data from it.
 
 
