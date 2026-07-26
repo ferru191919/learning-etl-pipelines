@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)     # production best practices
 # GLOBAL VARIABLES
 API_URL = "https://jsonplaceholder.typicode.com/users"
 TIMEOUT = 10
-OUTPUT_DIR = "Outputs/"
+OUTPUT_DIR = "../Outputs/"
 
 
 # EXTRACTION
