@@ -17,33 +17,13 @@ import logging
 TARGET_DB = "5.1_retail_dw.db"
 
 
-## FACT TABLE ##
-# order_sk = Surrogate PK --> artificial key with no business value --> protects you if business key changes.
-# customer_sk = Foreign Key
-# order_id = Business Key --> granularity = 1 row per order --> UNIQUE constraint.
-#
-def create_fact_order(conn):
-    sql = """
-    CREATE TABLE IF NOT EXISTS fact_order (  
-        order_sk            INTEGER PRIMARY KEY,
-        order_id            INTEGER NOT NULL UNIQUE,
-        customer_sk         INTEGER NOT NULL,
-        order_date          TEXT,
-        amount              REAL NOT NULL,
-        quantity            REAL NOT NULL,
-        currency            TEXT NOT NULL,
-        sales_channel       TEXT,
-    
-        FOREIGN KEY (customer_sk) REFERENCES dim_customer(customer_sk)
-    );
-    """
-    conn.execute(sql)
-
-
 ## DIMENSION TABLE ##
-# customer_sk = Surrogate PK
-# customer_source_id = business key --> UNIQUE constraint because SCD Type 1.
-# SCD Type 1 == if customer attributes change, new ones overwrite the old ones --> No history of changes.
+# customer_sk = Surrogate Key as PK --> Artificial key with no business meaning
+#                                   --> In dim table, used for SCD Type 2 to keep multiple rows of same customer_id
+#                                   --> It also protects your data warehouse if a source system changes its natural key
+#
+# customer_source_id = business key --> UNIQUE constraint because SCD Type 1
+# SCD Type 1 = if customer attributes change, new ones overwrite the old ones --> No history of past values
 #
 def create_dim_customer(conn):
     sql = """
@@ -56,6 +36,33 @@ def create_dim_customer(conn):
     country            TEXT,
     created_at         TEXT
 );
+    """
+    conn.execute(sql)
+
+
+## FACT TABLE ##
+# In fact table, uniqueness of a row usually comes from the combination of Foreign Keys.
+# You choose the combination of FKs depending on the granularity you want for the table.
+# Surrogate keys are not usually used as PKs in fact tables, because it can hide dublicate rows (same combination of FKs).
+#
+# In this Data Warehouse, I want to keep 1 row per order.
+# For this reason, I'm going to use order_id as PK.
+#
+# customer_sk = Foreign Key
+#
+def create_fact_order(conn):
+    sql = """
+    CREATE TABLE IF NOT EXISTS fact_order (  
+        order_id            INTEGER PRIMARY KEY,
+        customer_sk         INTEGER NOT NULL,
+        order_date          TEXT,
+        amount              REAL NOT NULL,
+        quantity            REAL NOT NULL,
+        currency            TEXT NOT NULL,
+        sales_channel       TEXT,
+    
+        FOREIGN KEY (customer_sk) REFERENCES dim_customer(customer_sk)
+    );
     """
     conn.execute(sql)
 
