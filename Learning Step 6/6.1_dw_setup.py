@@ -15,15 +15,19 @@ TARGET_DB = "6.1_retail_dw.db"
 
 
 ## FACT TABLE ##
-# order_sk = Surrogate PK --> artificial key with no business value --> protects you if business key changes.
+# In fact table, uniqueness of a row usually comes from the combination of Foreign Keys.
+# You choose the combination of FKs depending on the granularity you want for the table.
+# Surrogate keys are not usually used as PKs in fact tables, because it can hide dublicate rows (same combination of FKs).
+#
+# In this Data Warehouse, I want to keep 1 row per order.
+# For this reason, I'm going to use order_id as PK.
+#
 # customer_sk = Foreign Key
-# order_id = Business Key --> granularity = 1 row per order --> UNIQUE constraint.
 #
 def create_fact_order(conn):
     sql = """
     CREATE TABLE IF NOT EXISTS fact_order (  
-        order_sk            INTEGER PRIMARY KEY,
-        order_id            INTEGER NOT NULL UNIQUE,
+        order_id            INTEGER PRIMARY KEY,
         customer_sk         INTEGER NOT NULL,
         order_date          TEXT,
         amount              REAL NOT NULL,
