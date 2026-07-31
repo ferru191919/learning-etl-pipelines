@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 API_KEY = "WHQYM3ZFLN98YR7Y"
 BASE_URL = "https://www.alphavantage.co/query?"
 TICKERS = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA"]
-DB_PATH = "4.0 stocks.db"
+DB_PATH = "Learning Step 4/4.0 stocks.db"
 
 
 # 1. EXTRACT
